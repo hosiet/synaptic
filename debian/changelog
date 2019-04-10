@@ -1,3 +1,18 @@
+synaptic (0.84.5+nmu1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+
+  [ Boyuan Yang ]
+  * Refuse to start when Wayland environment is detected and running
+    as root.
+    - Detect Wayland environment variables in the program.
+    - Detect Wayland environment variables in synaptic-pkexec wrapper
+      script.
+    This provides a workaround for #818366.
+  * configure.in: Actually bump the version string to be 0.84.5.
+
+ -- Boyuan Yang <byang@debian.org>  Wed, 10 Apr 2019 15:52:16 -0400
+
 synaptic (0.84.5) unstable; urgency=medium
 
   [ Jeremy Bicha ]
