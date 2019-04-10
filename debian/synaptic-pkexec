@@ -1,2 +1,20 @@
 #!/bin/sh
-pkexec "/usr/sbin/synaptic" "$@"
+
+USING_WAYLAND=0
+if [ ! "x${WAYLAND_DISPLAY}" = "x" ]; then
+    USING_WAYLAND=1
+fi
+if [ "x${XDG_SESSION_TYPE}" = "xwayland" ]; then
+    USING_WAYLAND=1
+fi
+
+if [ "x${USING_WAYLAND}" = "x1" ]; then
+    # Running wayland; start synaptic without pkexec
+    zenity --warning --width=500 --text \
+        "Synaptic is currently not compatible with Wayland environment.\\n\
+You will not be able to perform system management task, like installing or removing packages.\\n\
+To make Synaptic fully functional, please restart your session without Wayland."
+    exec "/usr/sbin/synaptic" "$@"
+else
+    pkexec "/usr/sbin/synaptic" "$@"
+fi
