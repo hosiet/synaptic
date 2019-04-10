@@ -60,6 +60,40 @@ typedef enum {
    UPDATE_AUTO
 } UpdateType;
 
+bool is_under_wayland() {
+    char wayland_session_type[] = "wayland";
+    char x11_session_type[] = "x11";
+    char wayland_display[] = "";
+    char *pXDG_SESSION_TYPE = NULL;
+    char *pWAYLAND_DISPLAY = NULL;
+
+    // If the environment variable WAYLAND_DISPLAY is set,
+    // assume that we are under Wayland.
+    pWAYLAND_DISPLAY = getenv("WAYLAND_DISPLAY");
+    if (pWAYLAND_DISPLAY != NULL) {
+        if (strcmp(pWAYLAND_DISPLAY, wayland_display) != 0) {
+            return true;
+        }
+    }
+
+    // If environment variable XDG_SESSION_TYPE is "wayland",
+    // we are under Wayland. If "x11", we are under X.
+    pXDG_SESSION_TYPE = getenv("XDG_SESSION_TYPE");
+    if (pXDG_SESSION_TYPE != NULL) {
+        if (strcmp(pXDG_SESSION_TYPE, wayland_session_type) == 0) {
+            return true;
+        } else if (strcmp(pXDG_SESSION_TYPE, x11_session_type) == 0) {
+            return false;
+        }
+    }
+
+    // When invoked using pkexec, environment variables are removed
+    // thus not useful.
+    // Try other methods.
+
+    // unable to determine, return false
+    return false;
+}
 
 bool ShowHelp(CommandLine & CmdL)
 {
@@ -457,6 +491,17 @@ int main(int argc, char **argv)
    // init the static pkgStatus class. this loads the status pixmaps 
    // and colors
    RGPackageStatus::pkgStatus.init();
+
+   // check and refuse to run under Wayland when running as root
+   // See https://bugs.debian.org/818366
+   if (getuid() == 0 && is_under_wayland()) {
+      RGUserDialog userDialog;
+      userDialog.warning(g_strdup_printf("<b><big>%s</big></b>\n\n%s",
+                                         _("Compatibility Error"),
+                                         _("Synaptic does not support Wayland yet. "
+                                         "Please start synaptic under Xorg and try again.")));
+      exit(1);
+   }
 
    RPackageLister *packageLister = new RPackageLister();
    RGMainWindow *mainWindow = new RGMainWindow(packageLister, "main");
